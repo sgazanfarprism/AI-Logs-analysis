@@ -1,0 +1,23 @@
+# Core Dependencies
+elasticsearch>=8.11.0,<9.0.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+requests>=2.31.0
+
+# AI/ML
+google-generativeai>=0.3.0
+
+# Email
+secure-smtplib>=0.1.1
+
+# Scheduling
+schedule>=1.2.0
+python-dateutil>=2.8.2
+
+# Logging and Monitoring
+structlog>=23.2.0
+python-json-logger>=2.0.7
+
+# Utilities
+tenacity>=8.2.3  # Retry logic
+jsonschema>=4.20.0  # Config validation

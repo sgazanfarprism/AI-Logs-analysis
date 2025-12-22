@@ -1,0 +1,46 @@
+# Elasticsearch Configuration
+# Environment variables are substituted at runtime using ${VAR_NAME} syntax
+
+# Connection Settings
+host: ${ES_HOST}
+port: ${ES_PORT}
+use_ssl: ${ES_USE_SSL}
+verify_certs: true
+
+# Authentication
+username: ${ES_USERNAME}
+password: ${ES_PASSWORD}
+
+# Index Configuration
+index_pattern: ${ES_INDEX_PATTERN}  # e.g., filebeat-*
+
+# Query Settings
+timeout: 30  # seconds
+max_retries: 3
+retry_delay: 2  # seconds
+scroll_size: 1000  # documents per scroll
+scroll_timeout: "5m"
+
+# Filtering
+default_log_levels:
+  - error
+  - critical
+  - fatal
+  - exception
+
+# Field Mappings (ECS format)
+field_mappings:
+  timestamp: "@timestamp"
+  message: "message"
+  log_level: "log.level"
+  service_name: "service.name"
+  host_name: "host.name"
+  error_message: "error.message"
+  error_stack_trace: "error.stack_trace"
+  error_type: "error.type"
+  event_dataset: "event.dataset"
+  event_module: "event.module"
+
+# Performance
+max_logs_per_query: 100000
+pagination_size: 1000
