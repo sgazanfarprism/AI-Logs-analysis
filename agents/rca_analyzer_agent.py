@@ -393,7 +393,7 @@ class RCAAnalyzerAgent:
         error_groups: List[Dict[str, Any]],
         patterns: List[Dict[str, Any]],
         correlations: List[Dict[str, Any]],
-        temporal_analysis: Dict[str, Any]],
+        temporal_analysis: Dict[str, Any],
         dependency_analysis: Dict[str, Any],
         ai_analysis: Optional[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
