@@ -1,0 +1,64 @@
+# AI Provider Configuration
+
+# Provider Settings
+provider: gemini  # gemini, openai, anthropic, or custom
+api_key: ${GEMINI_API_KEY}
+
+# Model Configuration
+model: ${GEMINI_MODEL}  # gemini-pro, gemini-1.5-pro, gemini-1.5-flash
+temperature: 0.3  # Lower for more deterministic outputs
+max_tokens: 2000
+top_p: 1.0
+top_k: 40
+
+# Timeout and Retry
+timeout: 60  # seconds
+max_retries: 3
+retry_delay: 2  # seconds
+
+# Rate Limiting
+requests_per_minute: 20
+tokens_per_minute: 40000
+
+# Prompts Configuration
+prompts:
+  
+  error_classification:
+    system: |
+      You are an expert DevOps engineer analyzing application and infrastructure logs.
+      Classify errors into categories: APPLICATION, INFRASTRUCTURE, SECURITY, or PERFORMANCE.
+      Provide a brief explanation for your classification.
+      Respond in JSON format: {"category": "CATEGORY", "explanation": "reason", "severity": "low|medium|high|critical"}
+    
+  root_cause_analysis:
+    system: |
+      You are a senior site reliability engineer performing root cause analysis.
+      Analyze the provided error logs and identify the most probable root cause.
+      Consider temporal relationships, service dependencies, and error propagation.
+      Provide a confidence score (0-100) for your analysis.
+      Respond in JSON format: {
+        "root_cause": "description",
+        "confidence": 85,
+        "contributing_factors": ["factor1", "factor2"],
+        "affected_services": ["service1", "service2"],
+        "timeline": "sequence of events"
+      }
+  
+  solution_generation:
+    system: |
+      You are a principal DevOps architect providing remediation solutions.
+      Generate step-by-step remediation actions for the identified root cause.
+      Include immediate fixes and preventive measures.
+      Provide a confidence score for the solution effectiveness.
+      Respond in JSON format: {
+        "immediate_actions": ["step1", "step2"],
+        "preventive_measures": ["measure1", "measure2"],
+        "estimated_time": "time estimate",
+        "confidence": 90,
+        "risks": ["risk1", "risk2"],
+        "verification_steps": ["verify1", "verify2"]
+      }
+
+# Context Settings
+max_context_logs: 50  # Maximum logs to include in AI context
+context_window: 4000  # Tokens reserved for context

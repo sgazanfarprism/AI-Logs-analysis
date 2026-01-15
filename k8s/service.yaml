@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-analyzer-api
+  namespace: log-analyzer
+  labels:
+    app: log-analyzer
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3452
+      targetPort: 3452
+      protocol: TCP
+      name: http
+  selector:
+    app: log-analyzer
+    component: api
+
+---
+# Optional: LoadBalancer for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-analyzer-api-lb
+  namespace: log-analyzer
+  labels:
+    app: log-analyzer
+    component: api
+  annotations:
+    # AWS ALB annotations (if using AWS)
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 3452
+      protocol: TCP
+      name: http
+  selector:
+    app: log-analyzer
+    component: api

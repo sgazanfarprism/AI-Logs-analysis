@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # Hourly Log Analysis Scheduler (Main Service)
+  log-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-log-analysis:latest
+    container_name: log-analyzer-scheduler
+    restart: unless-stopped
+    environment:
+      # Gemini AI
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+
+      # SMTP Email
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - ALERT_RECIPIENTS=${ALERT_RECIPIENTS}
+
+      # AWS CloudWatch
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - CLOUDWATCH_LOG_GROUP=${CLOUDWATCH_LOG_GROUP:-/ecs/myapp}
+      - ECS_CLUSTER=${ECS_CLUSTER:-CA-PROD-CLR}
+
+      # Elasticsearch (optional)
+      - ES_HOST=${ES_HOST:-elasticsearch}
+      - ES_PORT=${ES_PORT:-9200}
+      - ES_USERNAME=${ES_USERNAME:-elastic}
+      - ES_PASSWORD=${ES_PASSWORD:-changeme}
+      - ES_INDEX_PATTERN=${ES_INDEX_PATTERN:-filebeat-*}
+      - ES_USE_SSL=${ES_USE_SSL:-false}
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./results:/app/results
+      - ./logs:/app/logs
+    command: ["python", "hourly_scheduler.py"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('healthy')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  # API Server (optional - for manual triggers)
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-log-analysis:latest
+    container_name: log-analyzer-api
+    restart: unless-stopped
+    ports:
+      - "3452:3452"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - ALERT_RECIPIENTS=${ALERT_RECIPIENTS}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - CLOUDWATCH_LOG_GROUP=${CLOUDWATCH_LOG_GROUP:-/ecs/myapp}
+      - ES_HOST=${ES_HOST:-elasticsearch}
+      - ES_PORT=${ES_PORT:-9200}
+      - ES_USERNAME=${ES_USERNAME:-elastic}
+      - ES_PASSWORD=${ES_PASSWORD:-changeme}
+      - ES_INDEX_PATTERN=${ES_INDEX_PATTERN:-filebeat-*}
+      - ES_USE_SSL=${ES_USE_SSL:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./results:/app/results
+      - ./logs:/app/logs
+    command: ["python", "api.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3452/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - api
+
+networks:
+  default:
+    name: log-analyzer-network

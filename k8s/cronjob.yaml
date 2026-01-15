@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: log-analyzer-hourly
+  namespace: log-analyzer
+  labels:
+    app: log-analyzer
+    component: scheduler
+spec:
+  # Run every hour at minute 0
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 24
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800  # 30 minutes max
+      template:
+        metadata:
+          labels:
+            app: log-analyzer
+            component: hourly-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: log-analyzer
+              image: ai-log-analysis:latest
+              imagePullPolicy: Always
+              command: ["python", "run_cloudwatch_analysis.py"]
+              args: ["--hours", "1"]
+              envFrom:
+                - configMapRef:
+                    name: log-analyzer-config
+                - secretRef:
+                    name: log-analyzer-secrets
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "500m"
+              volumeMounts:
+                - name: results
+                  mountPath: /app/results
+                - name: logs
+                  mountPath: /app/logs
+          volumes:
+            - name: results
+              persistentVolumeClaim:
+                claimName: log-analyzer-results-pvc
+            - name: logs
+              emptyDir: {}

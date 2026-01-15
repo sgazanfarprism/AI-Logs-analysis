@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-analyzer-scheduler
+  namespace: log-analyzer
+  labels:
+    app: log-analyzer
+    component: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-analyzer
+      component: scheduler
+  template:
+    metadata:
+      labels:
+        app: log-analyzer
+        component: scheduler
+    spec:
+      containers:
+        - name: log-analyzer
+          image: ai-log-analysis:latest
+          imagePullPolicy: Always
+          command: ["python", "hourly_scheduler.py"]
+          envFrom:
+            - configMapRef:
+                name: log-analyzer-config
+            - secretRef:
+                name: log-analyzer-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: results
+              mountPath: /app/results
+            - name: logs
+              mountPath: /app/logs
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import schedule; print('alive')"
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          readinessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "print('ready')"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: results
+          persistentVolumeClaim:
+            claimName: log-analyzer-results-pvc
+        - name: logs
+          emptyDir: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-analyzer-api
+  namespace: log-analyzer
+  labels:
+    app: log-analyzer
+    component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-analyzer
+      component: api
+  template:
+    metadata:
+      labels:
+        app: log-analyzer
+        component: api
+    spec:
+      containers:
+        - name: log-analyzer-api
+          image: ai-log-analysis:latest
+          imagePullPolicy: Always
+          command: ["python", "api.py"]
+          ports:
+            - containerPort: 3452
+              name: http
+          envFrom:
+            - configMapRef:
+                name: log-analyzer-config
+            - secretRef:
+                name: log-analyzer-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: results
+              mountPath: /app/results
+            - name: logs
+              mountPath: /app/logs
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3452
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3452
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: results
+          persistentVolumeClaim:
+            claimName: log-analyzer-results-pvc
+        - name: logs
+          emptyDir: {}
